@@ -1,0 +1,371 @@
+---
+title: "SVM and Clustering"
+author: "Aneel Marshall"
+date: "3 January 2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+### 1. SVM
+
+### a)
+
+```{r}
+library(ISLR)
+names(OJ)
+set.seed(1)
+train = sample(1070, 800)
+OJ.train = OJ[train,]
+OJ.test = OJ[-train,]
+```
+
+
+### b)
+
+```{r}
+library(e1071)
+set.seed(1)
+svmfit = svm(Purchase~., data = OJ.train, kernel='linear', cost = 0.01)
+summary(svmfit)
+```
+432 Support vectors out of 800 training observations
+215 from class CH 
+217 from class MM
+
+
+
+### c)
+
+### Training error rate:
+
+```{r}
+pred.train = predict(svmfit, OJ.train)
+table(pred.train, OJ.train$Purchase)
+```
+(55 + 78) / (439 + 78 + 55 + 228)
+Training error rate of 16.63%
+
+### Test error rate:
+
+```{r}
+pred.te = predict(svmfit, OJ.test)
+table(pred.te, OJ.test$Purchase)
+```
+(18 + 31) / (141 + 31 + 18 + 80)
+Test error rate of 18.15%
+
+
+### d)
+
+#### Tune:
+
+```{r}
+set.seed(10)
+tune.out = tune(svm, Purchase~., data = OJ.train, kernel = "linear", ranges = list(cost = c(0.01, 0.05, 0.1, 0.5, 1, 5, 10)))
+summary(tune.out)
+```
+Optimal cost of 0.5 gave the best performance with an error of 16.25%
+
+
+### e)
+
+### Training error rate with best.model:
+
+```{r}
+pred.tr = predict(tune.out$best.model, OJ.train)
+table(pred.tr, OJ.train$Purchase)
+```
+(55 + 72) / (439 + 72 + 55 + 234)
+Training error rate of 15.88%
+Lower training error rate than with cost 0.01
+An extra six observations were correctly classified 
+
+### Test error rate with best.model:
+
+```{r}
+pred.te = predict(tune.out$best.model, OJ.test)
+table(pred.te, OJ.test$Purchase)
+```
+(19 + 30) / (140 + 30 + 19 + 81)
+Test error rate of 18.15%
+Test error rate remains unchanged with the new value for cost
+
+
+
+### f)
+
+```{r}
+set.seed(1)
+svm.radial = svm(Purchase~., data = OJ.train, kernel = "radial")
+summary(svm.radial)
+
+```
+379 Support vectors out of 800 training observations
+188 from class CH 
+191 from class MM
+
+#### Training error rate:
+
+```{r}
+set.seed(1)
+pred.radial.tr = predict(svm.radial, OJ.train)
+table(pred.radial.tr, OJ.train$Purchase)
+
+```
+(39 + 77) / (455 + 77 + 39 + 229)
+Training error rate of 14.50% 
+Training error of 14.5% is lower than initial linear kernel with training error rate of 16.63%
+
+#### Test error rate:
+
+```{r}
+set.seed(1)
+pred.radial.te = predict(svm.radial, OJ.test)
+table(pred.radial.te, OJ.test$Purchase)
+```
+(18 + 28) / (141 + 28 + 18 + 83)
+Test error rate of 17.04%
+Lower than the initial linear kernel test error rate of 18.15%
+
+#### Tune:
+
+```{r}
+set.seed(10)
+tune.out.radial = tune(svm, Purchase~., data = OJ.train, kernel = "radial", ranges = list(cost = c(0.01, 0.05, 0.1, 0.5, 1, 5, 10)))
+summary(tune.out.radial)
+```
+Optimal value of cost of 0.5 gives the best performance with an error of 16.00%
+
+#### Training error rate with best.model:
+
+```{r}
+pred.radial.tr = predict(tune.out.radial$best.model, OJ.train)
+table(pred.radial.tr, OJ.train$Purchase)
+```
+
+(41 + 77) / (453 + 77 + 41 + 229)
+Training error rate of 14.75%
+Training error rate with optimal cost has slightly increased (14.75% v 14.50%)
+
+
+#### Test error rate with best.model:
+
+```{r}
+pred.radial.te = predict(tune.out.radial$best.model, OJ.test)
+table(pred.radial.te, OJ.test$Purchase)
+```
+
+(16 + 29) / (143 + 29 + 16 + 82)
+Test error rate of 16.67%
+Test error rate with optimal cost has slightly improved (16.67% v 17.04%)
+
+
+
+### g)
+
+```{r}
+set.seed(1)
+svm.poly = svm(Purchase~., data = OJ.train, kernel = "polynomial", degree = 2)
+summary(svm.poly)
+
+```
+454 Support vectors out of 800 training observations
+224 from class CH 
+230 from class MM
+
+#### Training error rate:
+
+```{r}
+pred.poly.tr = predict(svm.poly, OJ.train)
+table(pred.poly.tr, OJ.train$Purchase)
+```
+(33 + 105) / (461 + 105 + 33 + 201)
+Training error rate of 17.25% using degree = 2
+
+#### Test error rate:
+
+```{r}
+pred.poly.te = predict(svm.poly, OJ.test)
+table(pred.poly.te, OJ.test$Purchase)
+```
+(10 + 41) / (149 + 41 + 10 + 70)
+Test error rate of 18.89% using degree = 2
+# Compare to linear kernel and radial kernel here
+
+#### Tune:
+
+```{r}
+set.seed(10)
+tune.out.poly = tune(svm, Purchase~., data = OJ.train, kernel = "polynomial", degree = 2, ranges = list(cost = c(0.01, 0.05, 0.1, 0.5, 1, 5, 10)))
+summary(tune.out.poly)
+
+```
+Optimal cost of 10
+
+#### Training error rate with best.model:
+
+```{r}
+pred.poly.best.tr = predict(tune.out.poly$best.model, OJ.train)
+table(pred.poly.best.tr, OJ.train$Purchase)
+```
+(44 + 72) / (450 + 72 + 44 + 234)
+Training error rate of 14.50% using optimal cost = 10
+Improvement in training error rate using degree = 2 (14.50% v 17.25%)
+
+
+#### Test error rate with best.model:
+
+```{r}
+pred.poly.best.te = predict(tune.out.poly$best.model, OJ.test)
+table(pred.poly.best.te, OJ.test$Purchase)
+
+```
+(19 + 31) / (140 + 31 + 19 + 80)
+Test error rate of 18.52% using cost = 10
+Slight improvement in test error rate using cost = 10 (18.52% v 18.89%)
+
+
+### h)
+
+Overall the radial kernel appears to produce the best test error results on this data set.
+Radial: 16.67%
+Polynomial: 18.52%
+Linear: 18.15%
+
+
+
+### 3. Hierarchical Clustering
+
+### a)
+
+```{r}
+set.seed(1)
+dim(USArrests)
+states.dist = dist(USArrests)
+#states.dist
+states.complete = hclust(states.dist, method = 'complete')
+plot(states.complete)
+
+```
+
+
+
+
+
+### b)
+
+```{r}
+states.cut = cutree(states.complete, 3)
+states.cut
+table(states.cut)
+
+```
+
+
+
+
+### c)
+
+```{r}
+states.scaled = scale(USArrests)
+states.scaled.dist = dist(states.scaled)
+states.scaled.complete = hclust(states.scaled.dist, method = 'complete')
+plot(states.scaled.complete)
+```
+
+
+
+
+### d)
+
+Now four distinct clusters instead of three. 
+Yes I believe the variables should be scaled before inter-observation dissimilarities computed. Otherwise certain variables will have a larger impact than others eg assault due to larger volume.
+I believe this is due to the varied magnitudes and units involved measuring the variables
+
+
+
+
+### 4. PCA and K-Means Clustering
+
+### a)
+
+```{r}
+set.seed(10)
+x = matrix(rnorm(20*3*50, sd=0.1), ncol = 50)
+x[1:20, 1] = x[1:20, 1] + 3
+x[40:60,] = x[40:60,] - 4
+y = c(rep(1, 20),rep(2, 20), rep(3, 20))
+plot(x, col = y)
+```
+
+
+
+### b)
+
+
+```{r}
+pr.out = prcomp(x)
+#pr.out$x[,1:2]
+plot(pr.out$x[,1:2], col = y)
+```
+
+
+
+### c)
+
+```{r}
+set.seed(1)
+km.out = kmeans(x, 3, nstart = 20)
+km.out$cluster
+table(km.out$cluster, y)
+```
+
+The clusters obtained via K-Means clustering are very close to the true class labels. Only one observation was misclassified
+
+
+### d)
+
+```{r}
+set.seed(1)
+km.out = kmeans(x, 2, nstart = 20)
+km.out$cluster
+table(km.out$cluster, y)
+```
+Instead of being split among three classes, all of the observations from class 3 have been added to class 1. The one incorrect observation has remained
+
+
+
+### e)
+
+```{r}
+set.seed(1)
+km.out = kmeans(x, 4, nstart = 20)
+km.out$cluster
+table(km.out$cluster, y)
+```
+In this instance it appears the initial second class has been split among the second class and a third class. 
+
+
+
+### f)
+
+```{r}
+km.out = kmeans(pr.out$x[,1:2], 3, nstart = 20)
+table(km.out$cluster, y)
+```
+Here the observations have been assigned to their initial classes as before. No loss of accuracy using only PCA
+
+
+
+### g)
+
+```{r}
+set.seed(1)
+x = scale(x)
+km.out = kmeans(x, 3, nstart = 20)
+km.out$cluster
+table(km.out$cluster, y)
+```
+
+There does not appear to be any effect on the classification. One observation remains misclassified 
